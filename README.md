@@ -3,16 +3,16 @@
 一个基于 React + Tailwind CSS 的前端演示项目，使用树状 JSON 数据驱动首页、模块页、场景页、活动页和风险详情页。
 
 ## 运行方式
-
+(https://xyunn.github.io/lhx-v2/)
 ```bash
 python -m http.server 5173
-https://xyunn.github.io/lhx-v2/
+(https://xyunn.github.io/lhx-v2/)
 ```
 
 浏览器打开：
 
 ```text
-<http://localhost:5173>
+http://localhost:5173
 ```
 
 ## 数据扩展
