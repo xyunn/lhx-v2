@@ -6,6 +6,7 @@
 
 ```bash
 python -m http.server 5173
+https://xyunn.github.io/lhx-v2/
 ```
 
 浏览器打开：
