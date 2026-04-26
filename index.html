@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>抽水蓄能电站风险管控处理演示系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              steel: {
+                50: '#f6f8fb',
+                100: '#e8edf3',
+                200: '#cfd9e5',
+                300: '#a9b9ca',
+                500: '#64758a',
+                700: '#344456',
+                900: '#111827'
+              },
+              danger: '#c93434',
+              warn: '#d4831f',
+              safe: '#2f7f67'
+            },
+            boxShadow: {
+              soft: '0 18px 60px rgba(15, 23, 42, 0.08)'
+            }
+          }
+        }
+      };
+    </script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel" data-presets="env,react" src="./src/data/riskTree.js"></script>
+    <script type="text/babel" data-presets="env,react" src="./src/App.jsx"></script>
+  </body>
+</html>
