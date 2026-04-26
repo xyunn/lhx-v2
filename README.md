@@ -12,7 +12,7 @@ https://xyunn.github.io/lhx-v2/
 浏览器打开：
 
 ```text
-http://localhost:5173
+<http://localhost:5173>
 ```
 
 ## 数据扩展
