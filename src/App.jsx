@@ -1,16 +1,16 @@
 const { useMemo, useState } = React;
 
-const levelStyles = {
-  '重大风险因素': 'bg-red-50 text-red-700 ring-red-200',
-  '较大风险因素': 'bg-amber-50 text-amber-700 ring-amber-200',
-  '一般风险因素': 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-};
-
 const typeNames = {
   module: '一级模块',
-  scene: '作业场景',
-  activity: '作业活动',
-  risk: '风险详情'
+  stage: '二级阶段',
+  aspect: '三级方面'
+};
+
+const stageStyles = {
+  '施工前': 'bg-sky-50 text-sky-700 ring-sky-200',
+  '施工中': 'bg-slate-100 text-slate-700 ring-slate-200',
+  '异常处置': 'bg-red-50 text-red-700 ring-red-200',
+  '复工复核': 'bg-emerald-50 text-emerald-700 ring-emerald-200'
 };
 
 function App() {
@@ -45,8 +45,8 @@ function App() {
       </section>
       <section className="mx-auto max-w-7xl px-5 py-7 lg:px-8">
         {current.type === 'root' && <Home node={current} stats={stats} onOpen={goTo} />}
-        {current.type !== 'root' && current.type !== 'risk' && <NodePage node={current} onOpen={goTo} />}
-        {current.type === 'risk' && <RiskDetail node={current} />}
+        {current.type !== 'root' && current.type !== 'aspect' && <NodePage node={current} onOpen={goTo} />}
+        {current.type === 'aspect' && <AspectDetail node={current} />}
       </section>
     </main>
   );
@@ -61,9 +61,9 @@ function TopBar({ stats }) {
           <h1 className="mt-2 text-2xl font-semibold tracking-normal sm:text-3xl">抽水蓄能电站风险管控处理演示系统</h1>
         </div>
         <div className="grid grid-cols-3 gap-3 text-center">
-          <Metric label="模块" value={stats.modules} />
-          <Metric label="场景" value={stats.scenes} />
-          <Metric label="风险" value={stats.risks} danger />
+          <Metric label="一级模块" value={stats.modules} />
+          <Metric label="管控阶段" value={stats.stages} />
+          <Metric label="管控项" value={stats.aspects} danger />
         </div>
       </div>
     </header>
@@ -107,13 +107,13 @@ function Home({ node, stats, onOpen }) {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm font-medium text-slate-500">风险总览</p>
-          <h2 className="mt-1 text-2xl font-semibold text-slate-900">一级模块</h2>
+          <h2 className="mt-1 text-2xl font-semibold text-slate-900">一级风险模块</h2>
         </div>
         <div className="rounded bg-white/80 px-4 py-3 text-sm text-slate-600 shadow-sm">
-          当前数据包含 {stats.major} 项重大风险，优先以红色标识。
+          当前共 {stats.modules} 个风险模块，每个模块包含施工前、施工中、异常处置、复工复核四个阶段。
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {node.children.map((child, index) => (
           <ModuleCard key={child.id} node={child} index={index} onOpen={onOpen} />
         ))}
@@ -123,17 +123,18 @@ function Home({ node, stats, onOpen }) {
 }
 
 function ModuleCard({ node, index, onOpen }) {
-  const count = countRisks(node);
   return (
-    <button onClick={() => onOpen(node.id)} className="group min-h-44 rounded-lg border border-slate-200 bg-white p-5 text-left shadow-soft transition hover:-translate-y-0.5 hover:border-slate-400">
+    <button onClick={() => onOpen(node.id)} className="group min-h-48 rounded-lg border border-slate-200 bg-white p-5 text-left shadow-soft transition hover:-translate-y-0.5 hover:border-slate-400">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-400">M{String(index + 1).padStart(2, '0')}</span>
-        <span className="rounded bg-slate-100 px-2.5 py-1 text-xs text-slate-600">{count} 项风险</span>
+        <span className="text-xs font-semibold text-slate-400">R{String(index + 1).padStart(2, '0')}</span>
+        <span className="rounded bg-slate-100 px-2.5 py-1 text-xs text-slate-600">{countAspects(node)} 项管控</span>
       </div>
-      <h3 className="mt-6 text-lg font-semibold text-slate-900">{node.title}</h3>
-      <p className="mt-3 min-h-12 text-sm leading-6 text-slate-600">{node.summary}</p>
-      <div className="mt-5 h-1.5 w-full overflow-hidden rounded bg-slate-100">
-        <div className="h-full w-2/3 rounded bg-slate-600 transition group-hover:w-full group-hover:bg-red-600"></div>
+      <h3 className="mt-5 text-lg font-semibold leading-7 text-slate-900">{node.title}</h3>
+      <p className="mt-3 text-sm leading-6 text-slate-600">{node.summary}</p>
+      <div className="mt-5 grid grid-cols-4 gap-1.5">
+        {(node.children || []).map((stage) => (
+          <span key={stage.id} className="h-1.5 rounded bg-slate-200 group-hover:bg-slate-700"></span>
+        ))}
       </div>
     </button>
   );
@@ -142,14 +143,14 @@ function ModuleCard({ node, index, onOpen }) {
 function NodePage({ node, onOpen }) {
   const children = node.children || [];
   return (
-    <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+    <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
       <aside className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <p className="text-xs font-semibold text-slate-400">{typeNames[node.type]}</p>
-        <h2 className="mt-2 text-2xl font-semibold text-slate-900">{node.title}</h2>
+        <h2 className="mt-2 text-2xl font-semibold leading-9 text-slate-900">{node.title}</h2>
         <p className="mt-3 text-sm leading-6 text-slate-600">{node.summary}</p>
         <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
           <PanelStat label="下级节点" value={children.length} />
-          <PanelStat label="风险项" value={countRisks(node)} />
+          <PanelStat label="管控项" value={countAspects(node)} />
         </div>
       </aside>
       <div className="space-y-4">
@@ -171,15 +172,15 @@ function PanelStat({ label, value }) {
 }
 
 function ListItem({ node, onOpen }) {
-  const isRisk = node.type === 'risk';
+  const isStage = node.type === 'stage';
   return (
     <button onClick={() => onOpen(node.id)} className="group flex w-full flex-col gap-4 rounded-lg border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-slate-400 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold text-slate-400">{typeNames[node.type]}</span>
-          {isRisk && <RiskBadge level={node.level} />}
+          {isStage && <StageBadge title={node.title} />}
         </div>
-        <h3 className="mt-2 text-lg font-semibold text-slate-900">{isRisk ? `${node.level}：${node.title}` : node.title}</h3>
+        <h3 className="mt-2 text-lg font-semibold text-slate-900">{node.title}</h3>
         <p className="mt-2 text-sm leading-6 text-slate-600">{node.summary}</p>
       </div>
       <span className="shrink-0 rounded border border-slate-200 px-3 py-2 text-sm text-slate-600 group-hover:border-slate-500">查看</span>
@@ -187,44 +188,26 @@ function ListItem({ node, onOpen }) {
   );
 }
 
-function RiskBadge({ level }) {
-  return <span className={`rounded px-2.5 py-1 text-xs font-semibold ring-1 ${levelStyles[level] || levelStyles['一般风险因素']}`}>{level}</span>;
+function StageBadge({ title }) {
+  return <span className={`rounded px-2.5 py-1 text-xs font-semibold ring-1 ${stageStyles[title] || stageStyles['施工中']}`}>{title}</span>;
 }
 
-function RiskDetail({ node }) {
+function AspectDetail({ node }) {
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
         <div className="flex flex-wrap items-center gap-3">
-          <RiskBadge level={node.level} />
-          <span className="text-sm text-slate-500">风险详情页</span>
+          <span className="rounded bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">{node.aspect}</span>
+          <StageBadge title={node.stage} />
         </div>
-        <h2 className="mt-4 text-3xl font-semibold text-slate-950">{node.level}：{node.title}</h2>
-        <p className="mt-4 max-w-4xl text-base leading-7 text-slate-600">{node.summary}</p>
+        <h2 className="mt-4 text-3xl font-semibold leading-10 text-slate-950">{node.moduleTitle}</h2>
+        <p className="mt-3 text-lg font-medium text-slate-700">{node.stage} · {node.aspect}</p>
       </div>
-      <div className="grid gap-5 lg:grid-cols-2">
-        <DetailCard title="可能导致的事故" tone="danger" items={node.accidents} />
-        <DetailCard title="管控要求" items={node.requirements} />
-        <DetailCard title="管控措施" items={node.controls} />
-        <DetailCard title="应急处理办法" items={node.emergency} />
-      </div>
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-slate-900">管控内容</h3>
+        <p className="mt-4 text-base leading-8 text-slate-700">{node.content}</p>
+      </section>
     </div>
-  );
-}
-
-function DetailCard({ title, items, tone }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <h3 className={tone === 'danger' ? 'text-lg font-semibold text-red-700' : 'text-lg font-semibold text-slate-900'}>{title}</h3>
-      <ul className="mt-4 space-y-3">
-        {items.map((item, index) => (
-          <li key={item} className="flex gap-3 text-sm leading-6 text-slate-700">
-            <span className={tone === 'danger' ? 'mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red-600' : 'mt-1.5 h-2 w-2 shrink-0 rounded-full bg-slate-500'}></span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
   );
 }
 
@@ -242,9 +225,9 @@ function getCrumbs(root, path) {
   return crumbs;
 }
 
-function countRisks(node) {
-  if (node.type === 'risk') return 1;
-  return (node.children || []).reduce((sum, child) => sum + countRisks(child), 0);
+function countAspects(node) {
+  if (node.type === 'aspect') return 1;
+  return (node.children || []).reduce((sum, child) => sum + countAspects(child), 0);
 }
 
 function collectStats(root) {
@@ -252,9 +235,8 @@ function collectStats(root) {
   walk(root, all);
   return {
     modules: all.filter((item) => item.type === 'module').length,
-    scenes: all.filter((item) => item.type === 'scene').length,
-    risks: all.filter((item) => item.type === 'risk').length,
-    major: all.filter((item) => item.level === '重大风险因素').length
+    stages: all.filter((item) => item.type === 'stage').length,
+    aspects: all.filter((item) => item.type === 'aspect').length
   };
 }
 
